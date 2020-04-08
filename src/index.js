@@ -15,7 +15,7 @@ const { Item } = require('./model/item');
 
 const typeDefs = gql`
   type Item {
-    id: ID!
+    id: ID
     name: String
     desc: String
   }
@@ -25,7 +25,8 @@ const typeDefs = gql`
   }
 
   type Mutation {
-      addItem(name: String!, desc: String!): Item
+    addItem(name: String!, desc: String!): Item
+    deleteItem(id: ID!) : Item
   }
 `;
 
@@ -40,6 +41,16 @@ const resolvers = {
                 let response = await Item.create(args);
                 return response;
             } catch(e) {
+                return e.message;
+            }
+        },
+        deleteItem: async (_, args) => {
+            try {
+                await Item.findByIdAndRemove(args.id);
+                console.log('deleteItem()', args);
+                
+            } catch(e) {
+                console.log('ERROR', e.message);
                 return e.message;
             }
         }
