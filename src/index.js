@@ -37,7 +37,8 @@ const typeDefs = gql`
   type Mutation {
     addList(name: String!): List!
     addItem(name: String!, listId: ID!): Item!
-    deleteItem(id: ID!) : Item!
+    deleteList(id: ID!): List!
+    deleteItem(id: ID!): Item!
   }
 `;
 
@@ -70,10 +71,22 @@ const resolvers = {
                 return e.message;
             }
         },
+        deleteList: async (_, args) => {
+            try {
+                await List.findByIdAndRemove(args.id);
+                console.log('deleteItem()', args);
+                return null;
+                
+            } catch(e) {
+                console.log('ERROR', e.message);
+                return e.message;
+            }
+        },
         deleteItem: async (_, args) => {
             try {
                 await Item.findByIdAndRemove(args.id);
                 console.log('deleteItem()', args);
+                return null;
                 
             } catch(e) {
                 console.log('ERROR', e.message);
