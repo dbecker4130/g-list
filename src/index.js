@@ -37,6 +37,7 @@ const typeDefs = gql`
   type Mutation {
     addList(name: String!): List!
     addItem(name: String!, listId: ID!): Item!
+    editItem(id: ID!, name: String!): Item!
     deleteList(id: ID!): List!
     deleteItem(id: ID!): Item!
   }
@@ -64,7 +65,16 @@ const resolvers = {
             try {
                 let response = await Item.create({ name, listId });
                 console.log('res', response);
-                
+                return response;
+            } catch(e) {
+                console.log('ERROR', e.message);
+                return e.message;
+            }
+        },
+        editItem: async (_, { id, name }) => {
+            try {                
+                let response = await Item.findByIdAndUpdate(id, { name });
+                console.log('RES', response);
                 return response;
             } catch(e) {
                 console.log('ERROR', e.message);
@@ -75,7 +85,8 @@ const resolvers = {
             try {
                 await List.findByIdAndRemove(args.id);
                 console.log('deleteItem()', args);
-                return null;
+                const lists = await List.find({}).exec()
+                return lists;
                 
             } catch(e) {
                 console.log('ERROR', e.message);
@@ -86,7 +97,8 @@ const resolvers = {
             try {
                 await Item.findByIdAndRemove(args.id);
                 console.log('deleteItem()', args);
-                return null;
+                const items = await Item.find({}).exec()
+                return items;
                 
             } catch(e) {
                 console.log('ERROR', e.message);
@@ -97,7 +109,7 @@ const resolvers = {
     List: {
         items: async ({ id }, args) => {
             const items = await Item.find({ listId: id }).exec();
-            console.log('ITEMS in resolver', items);
+            // console.log('ITEMS in resolver', items);
             
             return items;
         }
