@@ -8,25 +8,38 @@ const { ApolloServer, gql } = require('apollo-server-express');
 const PORT = process.env.PORT;
 const url = process.env.MONGODB_URI;
 
-mongoose.connect(url, { useNewUrlParser: true });
+mongoose.connect(url, { useNewUrlParser: true, useFindAndModify: false });
 mongoose.connection.once('open', () => console.log(`Connected to mongo at ${url}`));
 
 const { Item } = require('./model/item');
+const { List } = require('./model/list');
 
 const typeDefs = gql`
+  type List {
+    id: ID!
+    name: String!
+    items: [Item!]!
+  }
+
   type Item {
-    id: ID
-    name: String
-    desc: String
+    id: ID!
+    name: String!
+    listId: ID!
   }
 
   type Query {
-    getItems: [Item]
+    getItems: [Item!]!
+    getItem(id: ID!): Item!
+    getLists: [List!]!
+    getList(id: ID!): List!
   }
 
   type Mutation {
-    addItem(name: String!, desc: String!): Item
-    deleteItem(id: ID!) : Item
+    addList(name: String!): List!
+    addItem(name: String!, listId: ID!): Item!
+    editItem(id: ID!, name: String!): Item!
+    deleteList(id: ID!): List!
+    deleteItem(id: ID!): Item!
   }
 `;
 
@@ -34,13 +47,49 @@ const typeDefs = gql`
 const resolvers = {
     Query: {
       getItems: async () => await Item.find({}).exec(),
+      getLists: async () => await List.find({}).exec(),
     },
     Mutation: {
-        addItem: async (_, args) => {
+        addList: async (_, args) => {
             try {
-                let response = await Item.create(args);
+                let response = await List.create(args);
+                console.log('res', response);
+                
                 return response;
             } catch(e) {
+                console.log('ERROR', e.message);
+                return e.message;
+            }
+        },
+        addItem: async (_, { name, listId }) => {
+            try {
+                let response = await Item.create({ name, listId });
+                console.log('res', response);
+                return response;
+            } catch(e) {
+                console.log('ERROR', e.message);
+                return e.message;
+            }
+        },
+        editItem: async (_, { id, name }) => {
+            try {                
+                let response = await Item.findByIdAndUpdate(id, { name });
+                console.log('RES', response);
+                return response;
+            } catch(e) {
+                console.log('ERROR', e.message);
+                return e.message;
+            }
+        },
+        deleteList: async (_, args) => {
+            try {
+                await List.findByIdAndRemove(args.id);
+                console.log('deleteItem()', args);
+                const lists = await List.find({}).exec()
+                return lists;
+                
+            } catch(e) {
+                console.log('ERROR', e.message);
                 return e.message;
             }
         },
@@ -48,13 +97,23 @@ const resolvers = {
             try {
                 await Item.findByIdAndRemove(args.id);
                 console.log('deleteItem()', args);
+                const items = await Item.find({}).exec()
+                return items;
                 
             } catch(e) {
                 console.log('ERROR', e.message);
                 return e.message;
             }
         }
-    }
+    },
+    List: {
+        items: async ({ id }, args) => {
+            const items = await Item.find({ listId: id }).exec();
+            // console.log('ITEMS in resolver', items);
+            
+            return items;
+        }
+    },
   };
 
 const server = new ApolloServer({ typeDefs, resolvers });
