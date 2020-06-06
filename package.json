@@ -19,7 +19,7 @@
   "homepage": "https://github.com/dbecker4130/g-list#readme",
   "dependencies": {
     "apollo-server": "^2.11.0",
-    "apollo-server-express": "^2.11.0",
+    "apollo-server-express": "^2.14.2",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
